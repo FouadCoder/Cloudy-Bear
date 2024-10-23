@@ -2,7 +2,19 @@ import axios from "axios";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content'
 import React , {useState} from "react"
+import Lottie from "lottie-react";
 import './App.css';
+import { 
+  sunny, 
+  clearNight, 
+  cloudyMorning, 
+  cloudyNight, 
+  rainMorning, 
+  rainNight, 
+  thunder, 
+  snow 
+} from "./assets/animation/Weather";
+
 
 function App() {
   const [date , setDate] = useState({});
@@ -41,27 +53,71 @@ const getWeatherDate = async () => {
       setDate(response.data); // Set The date 
       setLocation(inputValue); // Set the value of location 
       setinputValue(''); // Romove the input value 
-      console.log(response.data);
-      console.log(url);
     }
     catch(e){ 
       setDate({}); // Delete Date to avoid Error
       setLocation(''); // Romove Value of Location 
       setinputValue(''); // Romove value of input 
       showError( "Location Not Found ","Sorry, we could not find the weather for this city. Please check the city name and try again." , "info"); //! Show Error
-      console.log(url);
     }
   } else {
     showError("Input Needed!"  , "Please enter a city name before you search.." , "warning"); //! If user didn't write anything in input
   }
 }
 
+// Check the time if morning or night 
+let now = new Date();
+let hours = now.getHours();
+let backgroundClassName = "App";
+let daytime = true;
+if(hours >= 5 && hours < 18 ){
+  // Morning 
+  daytime = true;
+  backgroundClassName = "App"
+} else {
+  daytime = false;
+  backgroundClassName = "AppNight"
+}
+
+// Get The current Weather if rain or sunny and so on 
+const watherAnimation = () => {
+  // ! Stop switch if date is null 
+  if (!date || !date.weather || date.weather.length === 0 || date.weather[0].main === null) {
+    return daytime ? sunny : clearNight; // Return default if weather data is unavailable
+  }
+
+  switch((date.weather[0].main).toLowerCase()){
+    case "clear":
+    case "sunny":
+    return daytime? sunny : clearNight;
+    case "rain":
+    case "light rain":
+    case "moderate rain":
+    case "drizzle":
+    case "shower rain":
+      return daytime? rainMorning : rainNight;
+    case "clouds":
+    case "overcast clouds":
+    case "few clouds":
+    case "scattered clouds":
+    case "mist":
+    case "smoke":
+    case "haze":
+    case "dust":
+    case "fog":
+      return daytime ? cloudyMorning : cloudyNight; 
+    case "thunderstorm":
+      return thunder;
+    default:
+      return daytime? sunny : clearNight; // Default to sunny animation
+  }
+}
 
 
 
 
   return (
-    <div className="App">
+    <div className={backgroundClassName}>
       <div className="search">
         <input type="text" placeholder="Enter the city"  value={inputValue} onChange={getInputVaule}/>
         <button className="searchButton" onClick={getWeatherDate}>Search</button>
@@ -77,6 +133,9 @@ const getWeatherDate = async () => {
           <div className='weatherState'>
             <p>{date.main ? `${date.weather[0].main}` : ""}</p>
           </div>
+        </div>
+        <div className="middle">
+          <Lottie loop={true}  animationData={watherAnimation()}/>
         </div>
         <div className='bottom'>
           <div className='feels'>
